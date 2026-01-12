@@ -649,11 +649,17 @@
     </div>
 
     <script>
-        // Detect if running from file:// or http:// and set API URL accordingly
+        // Detect environment and set API URL accordingly
         const isFileProtocol = window.location.protocol === 'file:';
-        const API_URL = isFileProtocol 
-            ? 'http://localhost:3000/api/fetch-webhook'
-            : '/api/fetch-webhook';
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        
+        // On GitHub Pages, call webhook directly (CORS is enabled)
+        // Otherwise use server proxy
+        const API_URL = isGitHubPages
+            ? 'https://automation.wildeautomations.com/webhook/343dcbd2-dc35-4a61-a08a-21a0b310f085'
+            : isFileProtocol 
+                ? 'http://localhost:3000/api/fetch-webhook'
+                : '/api/fetch-webhook';
         let autoRefreshInterval = null;
         let autoRefreshEnabled = false;
 
@@ -732,10 +738,13 @@
                     btn.style.opacity = '0.6';
                 });
 
-                // Send to server proxy
-                const actionApiUrl = isFileProtocol 
-                    ? 'http://localhost:3000/api/submit-action'
-                    : '/api/submit-action';
+                // Send to webhook
+                const actionApiUrl = isGitHubPages
+                    ? 'https://jackwilde.app.n8n.cloud/webhook/4a1ca18b-35c1-4360-bc4e-d10a76c8c7a4'
+                    : isFileProtocol 
+                        ? 'http://localhost:3000/api/submit-action'
+                        : '/api/submit-action';
+                
                 const response = await fetch(actionApiUrl, {
                     method: 'POST',
                     headers: {
@@ -920,13 +929,27 @@
             }
 
             try {
-                const response = await fetch(API_URL);
-
+                // Use GET request (webhook supports GET with CORS)
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const result = await response.json();
+                // On GitHub Pages, webhook returns data directly (not wrapped)
+                // On server, response is wrapped in {success: true, data: ...}
+                let result;
+                if (isGitHubPages) {
+                    const data = await response.json();
+                    result = { success: true, data: data };
+                } else {
+                    result = await response.json();
+                }
 
                 if (result.success) {
                 // Render the data
@@ -994,6 +1017,15 @@
 
         async function fetchLogs() {
             try {
+                // Logs only work with server (stored server-side)
+                if (isGitHubPages) {
+                    const container = document.getElementById('logContent');
+                    if (container) {
+                        container.innerHTML = '<div class="empty-state"><p>Price change logs require the server to be running. Logs are stored server-side and not available on GitHub Pages.</p></div>';
+                    }
+                    return;
+                }
+                
                 const logsApiUrl = isFileProtocol 
                     ? 'http://localhost:3000/api/price-change-logs'
                     : '/api/price-change-logs';
