@@ -1203,10 +1203,12 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
             try {
-                // Send to webhook via server proxy
-                const chatApiUrl = isFileProtocol 
-                    ? 'http://localhost:3000/api/chat'
-                    : '/api/chat';
+                // Send to webhook
+                const chatApiUrl = isGitHubPages
+                    ? 'https://jackwilde.app.n8n.cloud/webhook/294320af-2b6f-4723-8949-aa8764c8ee04'
+                    : isFileProtocol 
+                        ? 'http://localhost:3000/api/chat'
+                        : '/api/chat';
                 
                 const response = await fetch(chatApiUrl, {
                     method: 'POST',
@@ -1216,7 +1218,18 @@
                     body: JSON.stringify({ message: message })
                 });
 
-                const result = await response.json();
+                let result;
+                if (isGitHubPages) {
+                    // Webhook may return data directly
+                    try {
+                        const data = await response.json();
+                        result = { success: true, response: data.message || data.response || JSON.stringify(data) };
+                    } catch {
+                        result = { success: true, response: 'Response received' };
+                    }
+                } else {
+                    result = await response.json();
+                }
 
                 // Remove loading message
                 loadingDiv.remove();
