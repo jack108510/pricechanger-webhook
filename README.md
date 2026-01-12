@@ -96,3 +96,4 @@ webhook-dashboard/
 ISC
 
 # pricechanger-webhook
+# pricechanger-webhook
