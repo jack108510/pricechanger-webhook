@@ -1,0 +1,19 @@
+{
+  "name": "chatgpt-local",
+  "version": "1.0.0",
+  "description": "Local ChatGPT server that forwards messages to n8n",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.81.1",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "openai": "^6.5.0"
+  }
+}
