@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #ffffff;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            color: #1a1a1a;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: 1px solid #2563eb;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
+        button:active {
+            background: #1e40af;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #ffffff;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+
+        button.secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 4px;
+            border: 1px solid;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .approve-btn {
+            background: #ffffff;
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .approve-btn:hover:not(:disabled) {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .reject-btn {
+            background: #ffffff;
+            color: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .reject-btn:hover:not(:disabled) {
+            background: #dc2626;
+            color: #ffffff;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .log-entry {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-left: 3px solid #2563eb;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .log-entry.approved {
+            border-left-color: #10b981;
+        }
+
+        .log-entry.rejected {
+            border-left-color: #dc2626;
+        }
+
+        .log-entry.failed {
+            border-left-color: #6b7280;
+            opacity: 0.8;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .log-action {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .log-action.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .log-action.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .log-timestamp {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .log-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .log-detail-item {
+            font-size: 13px;
+        }
+
+        .log-detail-label {
+            color: #6b7280;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .log-detail-value {
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            color: #2563eb;
+        }
+
+        .nav-tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .chat-container {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #f9fafb;
+        }
+
+        .chat-message {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+        }
+
+        .chat-message.user {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+
+        .chat-message.assistant {
+            background: #ffffff;
+        }
+
+        .chat-message-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .chat-message-content {
+            color: #1a1a1a;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .chat-send-btn {
+            padding: 12px 24px;
+            background: #2563eb;
+            color: white;
+            border: 1px solid #2563eb;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .chat-send-btn:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+
+        .chat-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.error {
+            background: #ef4444;
+        }
+
+        .status-dot.loading {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            padding: 24px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            color: #1a1a1a;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .data-container {
+            background: #ffffff;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .data-container h2 {
+            color: #1a1a1a;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .data-table thead {
+            background: #f9fafb;
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #1a1a1a;
+            font-size: 14px;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .data-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .data-card {
+            background: #ffffff;
+            border-radius: 4px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .data-card-key {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .data-card-value {
+            color: #1a1a1a;
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        .json-viewer {
+            background: #f8f9fa;
+            color: #1a1a1a;
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .json-key {
+            color: #2563eb;
+        }
+
+        .json-string {
+            color: #059669;
+        }
+
+        .json-number {
+            color: #dc2626;
+        }
+
+        .json-boolean {
+            color: #7c3aed;
+        }
+
+        .json-null {
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .loading-spinner {
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 4px;
+            padding: 16px;
+            color: #991b1b;
+            margin: 20px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            opacity: 0.5;
+        }
+
+        .refresh-info {
+            color: #6b7280;
+            font-size: 12px;
+            margin-left: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .controls {
+                width: 100%;
+            }
+
+            button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div>
+                <h1>Webhook Dashboard</h1>
+                <p class="subtitle">Real-time data from n8n webhook</p>
+            </div>
+            <div class="controls">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Ready</span>
+                </div>
+                <button id="refreshBtn" onclick="fetchData()">Refresh</button>
+                <button class="secondary" id="autoRefreshBtn" onclick="toggleAutoRefresh()">Auto Refresh: OFF</button>
+                <span class="refresh-info" id="lastRefresh"></span>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showPage('chat')">Chat</button>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page active">
+        <div id="statsContainer" class="stats-grid"></div>
+
+        <div id="dataContainer" class="data-container">
+            <h2>Data</h2>
+            <div id="dataContent">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading data...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="logContainer" class="data-container">
+                <h2>Price Change Log</h2>
+                <div id="logContent">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading logs...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div id="chatPage" class="page">
+            <div class="chat-container">
+                <h2 style="margin-bottom: 20px;">Chat</h2>
+                <div id="chatMessages" class="chat-messages">
+                    <div class="chat-message assistant">
+                        <div class="chat-message-label">Assistant</div>
+                        <div class="chat-message-content">Hello! How can I help you today?</div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+                    <button id="chatSendBtn" class="chat-send-btn" onclick="sendChatMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Detect if running from file:// or http:// and set API URL accordingly
+        const isFileProtocol = window.location.protocol === 'file:';
+        const API_URL = isFileProtocol 
+            ? 'http://localhost:3000/api/fetch-webhook'
+            : '/api/fetch-webhook';
+        let autoRefreshInterval = null;
+        let autoRefreshEnabled = false;
+
+        function updateStatus(status, text) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            statusDot.className = 'status-dot ' + status;
+            statusText.textContent = text;
+        }
+
+        function updateLastRefresh() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('lastRefresh').textContent = `Last: ${timeString}`;
+        }
+
+        function formatJSON(obj, indent = 0) {
+            if (obj === null) return '<span class="json-null">null</span>';
+            if (typeof obj === 'string') return `<span class="json-string">"${obj}"</span>`;
+            if (typeof obj === 'number') return `<span class="json-number">${obj}</span>`;
+            if (typeof obj === 'boolean') return `<span class="json-boolean">${obj}</span>`;
+            
+            if (Array.isArray(obj)) {
+                if (obj.length === 0) return '[]';
+                let html = '[\n';
+                obj.forEach((item, index) => {
+                    html += '  '.repeat(indent + 1) + formatJSON(item, indent + 1);
+                    if (index < obj.length - 1) html += ',';
+                    html += '\n';
+                });
+                html += '  '.repeat(indent) + ']';
+                return html;
+            }
+            
+            if (typeof obj === 'object') {
+                const keys = Object.keys(obj);
+                if (keys.length === 0) return '{}';
+                let html = '{\n';
+                keys.forEach((key, index) => {
+                    html += '  '.repeat(indent + 1) + `<span class="json-key">"${key}"</span>: ` + formatJSON(obj[key], indent + 1);
+                    if (index < keys.length - 1) html += ',';
+                    html += '\n';
+                });
+                html += '  '.repeat(indent) + '}';
+                return html;
+            }
+            
+            return String(obj);
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        async function handleAction(index, action) {
+            try {
+                // Get the item data from the stored array
+                if (!window.webhookDataArray || !window.webhookDataArray[index]) {
+                    throw new Error('Item data not found');
+                }
+                
+                const itemData = window.webhookDataArray[index];
+                
+                // Prepare payload with all item data + action
+                const payload = {
+                    ...itemData,
+                    action: action // Add approve or reject
+                };
+
+                // Disable buttons during request
+                const row = document.querySelector(`tr[data-item-index="${index}"]`);
+                const buttons = row.querySelectorAll('.action-btn');
+                buttons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                });
+
+                // Send to server proxy
+                const actionApiUrl = isFileProtocol 
+                    ? 'http://localhost:3000/api/submit-action'
+                    : '/api/submit-action';
+                const response = await fetch(actionApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success feedback
+                    const actionBtn = row.querySelector(`.${action}-btn`);
+                    actionBtn.style.background = '#10b981';
+                    actionBtn.style.color = '#ffffff';
+                    actionBtn.textContent = action === 'approve' ? '✓ Approved' : '✓ Rejected';
+                    
+                    // Disable both buttons after action
+                    buttons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.cursor = 'not-allowed';
+                    });
+                    
+                    // Refresh logs to show the new entry
+                    fetchLogs();
+                } else {
+                    throw new Error(result.error || 'Failed to submit action');
+                }
+            } catch (error) {
+                alert(`Error submitting ${action}: ${error.message}`);
+                // Re-enable buttons on error
+                const row = document.querySelector(`tr[data-item-index="${index}"]`);
+                const buttons = row.querySelectorAll('.action-btn');
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+            }
+        }
+
+        function renderData(data) {
+            const container = document.getElementById('dataContent');
+            
+            // Clear previous content
+            container.innerHTML = '';
+
+            // Define the column order
+            const columnOrder = [
+                'Item_description',
+                'item_id',
+                'direction',
+                'delta_pct',
+                'suggested_price',
+                'status',
+                'confidence',
+                'reason'
+            ];
+
+            // Helper function to get value from nested objects (handles dot notation)
+            function getValue(obj, key) {
+                // Try exact match first
+                if (obj.hasOwnProperty(key)) {
+                    return obj[key];
+                }
+                // Try case-insensitive match
+                const lowerKey = key.toLowerCase();
+                for (const objKey in obj) {
+                    if (objKey.toLowerCase() === lowerKey) {
+                        return obj[objKey];
+                    }
+                }
+                // Try dot notation
+                if (key.includes('.')) {
+                    const parts = key.split('.');
+                    let value = obj;
+                    for (const part of parts) {
+                        if (value && typeof value === 'object' && value.hasOwnProperty(part)) {
+                            value = value[part];
+                        } else {
+                            return undefined;
+                        }
+                    }
+                    return value;
+                }
+                return undefined;
+            }
+
+            // Normalize data to array format
+            let dataArray = [];
+            if (Array.isArray(data)) {
+                dataArray = data;
+            } else if (typeof data === 'object' && data !== null) {
+                // If it's a single object, wrap it in an array
+                // Or if it has a data property that's an array, use that
+                if (Array.isArray(data.data)) {
+                    dataArray = data.data;
+                } else if (Array.isArray(data.items)) {
+                    dataArray = data.items;
+                } else {
+                    dataArray = [data];
+                }
+            } else {
+                    container.innerHTML = '<div class="empty-state"><p>No data available</p></div>';
+                    return;
+                }
+
+            if (dataArray.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No data available</p></div>';
+                return;
+            }
+
+            // Render as table with specified columns
+                    let tableHTML = '<table class="data-table"><thead><tr>';
+            columnOrder.forEach(column => {
+                tableHTML += `<th>${column}</th>`;
+                    });
+            tableHTML += '<th>Action</th>'; // Add Action column
+                    tableHTML += '</tr></thead><tbody>';
+                    
+            dataArray.forEach((item, index) => {
+                if (typeof item === 'object' && item !== null) {
+                    // Store the full item data as JSON in data attribute for easy access
+                    const itemData = JSON.stringify(item);
+                    tableHTML += `<tr data-item-index="${index}">`;
+                    columnOrder.forEach(column => {
+                        const value = getValue(item, column);
+                            let displayValue = value;
+                            if (value === null || value === undefined) {
+                            displayValue = '<em style="color: #9ca3af;">—</em>';
+                            } else if (typeof value === 'object') {
+                                displayValue = JSON.stringify(value);
+                        } else {
+                            displayValue = String(value);
+                            }
+                            tableHTML += `<td>${displayValue}</td>`;
+                        });
+                    // Add action buttons
+                    tableHTML += `<td style="white-space: nowrap;">
+                        <button class="action-btn approve-btn" onclick="handleAction(${index}, 'approve')" style="margin-right: 8px;">Approve</button>
+                        <button class="action-btn reject-btn" onclick="handleAction(${index}, 'reject')">Reject</button>
+                    </td>`;
+                        tableHTML += '</tr>';
+                }
+                    });
+                    
+                    tableHTML += '</tbody></table>';
+                    container.innerHTML = tableHTML;
+            
+            // Store data array globally for action handling
+            window.webhookDataArray = dataArray;
+        }
+
+        function renderStats(data) {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = '';
+
+            if (Array.isArray(data)) {
+                const totalCard = document.createElement('div');
+                totalCard.className = 'stat-card';
+                totalCard.innerHTML = `
+                    <div class="stat-label">Total Items</div>
+                    <div class="stat-value">${data.length}</div>
+                `;
+                container.appendChild(totalCard);
+            } else if (typeof data === 'object' && data !== null) {
+                const keys = Object.keys(data);
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <div class="stat-label">Data Fields</div>
+                    <div class="stat-value">${keys.length}</div>
+                `;
+                container.appendChild(statCard);
+            }
+        }
+
+        async function fetchData() {
+            updateStatus('loading', 'Loading...');
+            const dataContent = document.getElementById('dataContent');
+            if (!autoRefreshEnabled) {
+            dataContent.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Fetching data...</p></div>';
+            }
+
+            try {
+                const response = await fetch(API_URL);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                // Render the data
+                    renderStats(result.data);
+                    renderData(result.data);
+                updateStatus('success', 'Connected');
+                updateLastRefresh();
+                } else {
+                    throw new Error(result.error || 'Failed to fetch data');
+                }
+
+            } catch (error) {
+                updateStatus('error', 'Error');
+                const dataContent = document.getElementById('dataContent');
+                let errorMessage = error.message;
+                let helpText = '';
+                
+                // Check if it's a network error (server not running)
+                if (error.message.includes('Failed to fetch') || error.message.includes('ERR_FAILED')) {
+                    errorMessage = 'Cannot connect to server. Make sure the webhook server is running on http://localhost:3000';
+                    helpText = isFileProtocol ? 'Open http://localhost:3000 in your browser, or start the server with: node webhook-server.js' : 'Make sure the webhook server is running.';
+                } else if (error.message.includes('404') || error.message.includes('not found')) {
+                    errorMessage = 'Webhook not found (404)';
+                    helpText = 'The n8n workflow is not active. Please:<br>1. Go to your n8n dashboard<br>2. Find the workflow with this webhook<br>3. Activate the workflow<br>4. Make sure the webhook URL is correct: https://automation.wildeautomations.com/webhook/343dcbd2-dc35-4a61-a08a-21a0b310f085';
+                } else {
+                    helpText = 'Make sure the webhook server is running and the n8n workflow is active.';
+                }
+                
+                dataContent.innerHTML = `
+                    <div class="error-message">
+                        <strong>Error fetching data:</strong><br>
+                        ${errorMessage}<br><br>
+                        <small>${helpText}</small>
+                    </div>
+                `;
+                document.getElementById('statsContainer').innerHTML = '';
+            }
+        }
+
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (autoRefreshEnabled) {
+                btn.textContent = 'Auto Refresh: ON (30s)';
+                btn.style.background = '#10b981';
+                btn.style.borderColor = '#10b981';
+                btn.style.color = '#ffffff';
+                autoRefreshInterval = setInterval(() => {
+                    fetchData();
+                    fetchLogs();
+                }, 30000); // Refresh every 30 seconds
+            } else {
+                btn.textContent = 'Auto Refresh: OFF';
+                btn.style.background = '#ffffff';
+                btn.style.borderColor = '#d1d5db';
+                btn.style.color = '#374151';
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+
+        async function fetchLogs() {
+            try {
+                const logsApiUrl = isFileProtocol 
+                    ? 'http://localhost:3000/api/price-change-logs'
+                    : '/api/price-change-logs';
+                
+                const response = await fetch(logsApiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    renderLogs(result.logs);
+                }
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                const logContent = document.getElementById('logContent');
+                logContent.innerHTML = `<div class="error-message">Error loading logs: ${error.message}</div>`;
+            }
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logContent');
+            
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No price changes logged yet</p></div>';
+                return;
+            }
+
+            let logsHTML = '';
+            logs.forEach(log => {
+                const timestamp = formatTimestamp(log.timestamp);
+                const actionClass = log.success ? log.action : 'failed';
+                const actionLabel = log.success ? log.action.toUpperCase() : 'FAILED';
+                
+                logsHTML += `
+                    <div class="log-entry ${actionClass}">
+                        <div class="log-header">
+                            <span class="log-action ${actionClass}">${actionLabel}</span>
+                            <span class="log-timestamp">${timestamp}</span>
+                        </div>
+                        <div class="log-details">
+                            ${log.Item_description ? `
+                                <div class="log-detail-item">
+                                    <div class="log-detail-label">Item Description</div>
+                                    <div class="log-detail-value">${log.Item_description}</div>
+                                </div>
+                            ` : ''}
+                            ${log.item_id ? `
+                                <div class="log-detail-item">
+                                    <div class="log-detail-label">Item ID</div>
+                                    <div class="log-detail-value">${log.item_id}</div>
+                                </div>
+                            ` : ''}
+                            ${log.direction ? `
+                                <div class="log-detail-item">
+                                    <div class="log-detail-label">Direction</div>
+                                    <div class="log-detail-value">${log.direction}</div>
+                                </div>
+                            ` : ''}
+                            ${log.delta_pct !== undefined && log.delta_pct !== null ? `
+                                <div class="log-detail-item">
+                                    <div class="log-detail-label">Delta %</div>
+                                    <div class="log-detail-value">${log.delta_pct}%</div>
+                                </div>
+                            ` : ''}
+                            ${log.suggested_price !== undefined && log.suggested_price !== null ? `
+                                <div class="log-detail-item">
+                                    <div class="log-detail-label">Suggested Price</div>
+                                    <div class="log-detail-value">$${log.suggested_price}</div>
+                                </div>
+                            ` : ''}
+                            ${log.confidence !== undefined && log.confidence !== null ? `
+                                <div class="log-detail-item">
+                                    <div class="log-detail-label">Confidence</div>
+                                    <div class="log-detail-value">${log.confidence}</div>
+                                </div>
+                            ` : ''}
+                            ${log.reason ? `
+                                <div class="log-detail-item" style="grid-column: 1 / -1;">
+                                    <div class="log-detail-label">Reason</div>
+                                    <div class="log-detail-value">${log.reason}</div>
+                                </div>
+                            ` : ''}
+                            ${!log.success && log.error ? `
+                                <div class="log-detail-item" style="grid-column: 1 / -1;">
+                                    <div class="log-detail-label">Error</div>
+                                    <div class="log-detail-value" style="color: #dc2626;">${log.error}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = logsHTML;
+        }
+
+        // Page navigation
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageName + 'Page').classList.add('active');
+            
+            // Update nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Chat functionality
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('chatSendBtn');
+            const messagesContainer = document.getElementById('chatMessages');
+            
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Disable input and button
+            input.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            // Add user message to chat
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message user';
+            userMessageDiv.innerHTML = `
+                <div class="chat-message-label">You</div>
+                <div class="chat-message-content">${message}</div>
+            `;
+            messagesContainer.appendChild(userMessageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Clear input
+            input.value = '';
+
+            // Add loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'chat-message assistant';
+            loadingDiv.id = 'loadingMessage';
+            loadingDiv.innerHTML = `
+                <div class="chat-message-label">Assistant</div>
+                <div class="chat-message-content">Thinking...</div>
+            `;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                // Send to webhook via server proxy
+                const chatApiUrl = isFileProtocol 
+                    ? 'http://localhost:3000/api/chat'
+                    : '/api/chat';
+                
+                const response = await fetch(chatApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const result = await response.json();
+
+                // Remove loading message
+                loadingDiv.remove();
+
+                if (result.success) {
+                    // Add assistant response
+                    const assistantMessageDiv = document.createElement('div');
+                    assistantMessageDiv.className = 'chat-message assistant';
+                    assistantMessageDiv.innerHTML = `
+                        <div class="chat-message-label">Assistant</div>
+                        <div class="chat-message-content">${result.response || result.data || 'No response received'}</div>
+                    `;
+                    messagesContainer.appendChild(assistantMessageDiv);
+                } else {
+                    // Add error message
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'chat-message assistant';
+                    errorMessageDiv.innerHTML = `
+                        <div class="chat-message-label">Error</div>
+                        <div class="chat-message-content" style="color: #dc2626;">Error: ${result.error || 'Unknown error'}</div>
+                    `;
+                    messagesContainer.appendChild(errorMessageDiv);
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            } catch (error) {
+                // Remove loading message
+                loadingDiv.remove();
+
+                // Add error message
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.className = 'chat-message assistant';
+                errorMessageDiv.innerHTML = `
+                    <div class="chat-message-label">Error</div>
+                    <div class="chat-message-content" style="color: #dc2626;">Error: ${error.message}</div>
+                `;
+                messagesContainer.appendChild(errorMessageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } finally {
+                // Re-enable input and button
+                input.disabled = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+                input.focus();
+            }
+        }
+
+        // Initial load
+        fetchData();
+        fetchLogs();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
+
