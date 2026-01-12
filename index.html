@@ -649,19 +649,11 @@
     </div>
 
     <script>
-        // Detect environment and set API URL accordingly
+        // Detect if running from file:// or http:// and set API URL accordingly
         const isFileProtocol = window.location.protocol === 'file:';
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        // Use direct webhook URL on GitHub Pages (will have CORS limitations)
-        // Otherwise use server proxy
-        const API_URL = isGitHubPages
-            ? 'https://automation.wildeautomations.com/webhook/343dcbd2-dc35-4a61-a08a-21a0b310f085'
-            : isFileProtocol 
-                ? 'http://localhost:3000/api/fetch-webhook'
-                : '/api/fetch-webhook';
-        
+        const API_URL = isFileProtocol 
+            ? 'http://localhost:3000/api/fetch-webhook'
+            : '/api/fetch-webhook';
         let autoRefreshInterval = null;
         let autoRefreshEnabled = false;
 
