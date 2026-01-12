@@ -753,7 +753,23 @@
                     body: JSON.stringify(payload)
                 });
 
-                const result = await response.json();
+                let result;
+                if (isGitHubPages) {
+                    // Webhook may not return standard format, treat as success if response.ok
+                    if (response.ok) {
+                        try {
+                            const data = await response.json();
+                            result = { success: true, message: 'Action submitted' };
+                        } catch {
+                            result = { success: true, message: 'Action submitted' };
+                        }
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        result = { success: false, error: errorData.message || 'Failed to submit action' };
+                    }
+                } else {
+                    result = await response.json();
+                }
 
                 if (result.success) {
                     // Show success feedback
