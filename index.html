@@ -732,13 +732,10 @@
                     btn.style.opacity = '0.6';
                 });
 
-                // Send to webhook
-                const actionApiUrl = isGitHubPages
-                    ? 'https://jackwilde.app.n8n.cloud/webhook/4a1ca18b-35c1-4360-bc4e-d10a76c8c7a4'
-                    : isFileProtocol 
-                        ? 'http://localhost:3000/api/submit-action'
-                        : '/api/submit-action';
-                
+                // Send to server proxy
+                const actionApiUrl = isFileProtocol 
+                    ? 'http://localhost:3000/api/submit-action'
+                    : '/api/submit-action';
                 const response = await fetch(actionApiUrl, {
                     method: 'POST',
                     headers: {
@@ -923,58 +920,13 @@
             }
 
             try {
-                // On GitHub Pages, try POST to webhook directly
-                let fetchOptions = {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    }
-                };
+                const response = await fetch(API_URL);
 
-                if (isGitHubPages) {
-                    // For GitHub Pages, try POST since webhooks typically accept POST
-                    fetchOptions.method = 'POST';
-                    fetchOptions.headers['Content-Type'] = 'application/json';
-                    fetchOptions.body = JSON.stringify({});
-                }
-
-                let response = await fetch(API_URL, fetchOptions);
-                
                 if (!response.ok) {
-                    // If GET failed on GitHub Pages, try POST
-                    if (!isGitHubPages && response.status === 404) {
-                        response = await fetch(API_URL, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                            },
-                            body: JSON.stringify({})
-                        });
-                    }
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                let result;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    result = await response.json();
-                } else {
-                    const text = await response.text();
-                    try {
-                        result = JSON.parse(text);
-                    } catch {
-                        result = { success: true, data: text };
-                    }
-                }
-
-                // Handle direct webhook response (not wrapped in server response)
-                if (!result.success && result.data !== undefined) {
-                    result = { success: true, data: result };
-                }
+                const result = await response.json();
 
                 if (result.success) {
                 // Render the data
@@ -1042,13 +994,6 @@
 
         async function fetchLogs() {
             try {
-                // Logs only work with server, show empty state on GitHub Pages
-                if (isGitHubPages) {
-                    const container = document.getElementById('logContent');
-                    container.innerHTML = '<div class="empty-state"><p>Price change logs require the server to be running. Logs are stored server-side.</p></div>';
-                    return;
-                }
-                
                 const logsApiUrl = isFileProtocol 
                     ? 'http://localhost:3000/api/price-change-logs'
                     : '/api/price-change-logs';
@@ -1210,41 +1155,20 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
             try {
-                // Send to webhook
-                const chatApiUrl = isGitHubPages
-                    ? 'https://jackwilde.app.n8n.cloud/webhook/294320af-2b6f-4723-8949-aa8764c8ee04'
-                    : isFileProtocol 
-                        ? 'http://localhost:3000/api/chat'
-                        : '/api/chat';
+                // Send to webhook via server proxy
+                const chatApiUrl = isFileProtocol 
+                    ? 'http://localhost:3000/api/chat'
+                    : '/api/chat';
                 
-                const chatPayload = isGitHubPages ? { message: message } : { message: message };
-                const chatFetchOptions = {
+                const response = await fetch(chatApiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(chatPayload)
-                };
-                
-                const response = await fetch(chatApiUrl, chatFetchOptions);
+                    body: JSON.stringify({ message: message })
+                });
 
-                let result;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    result = await response.json();
-                } else {
-                    const text = await response.text();
-                    try {
-                        result = JSON.parse(text);
-                    } catch {
-                        result = { success: true, response: text };
-                    }
-                }
-                
-                // Handle direct webhook response format
-                if (isGitHubPages && !result.success && !result.response) {
-                    result = { success: true, response: result.message || result.data || JSON.stringify(result) };
-                }
+                const result = await response.json();
 
                 // Remove loading message
                 loadingDiv.remove();
