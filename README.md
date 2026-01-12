@@ -94,7 +94,3 @@ webhook-dashboard/
 ## License
 
 ISC
-
-# pricechanger-webhook
-# pricechanger-webhook
-# pricechanger-webhook
