@@ -23,8 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (dashboard HTML)
-app.use(express.static(__dirname));
+// Don't serve static files from __dirname, we'll serve specific files
 
 // Webhook endpoint - receives POST requests from n8n
 app.post('/webhook/receive', (req, res) => {
@@ -147,34 +146,34 @@ app.get('/api/fetch-webhook', async (req, res) => {
         let response;
         let data;
 
-        // Try POST first (n8n webhooks typically expect POST)
+        // Try GET first (this webhook is registered for GET requests)
         try {
             console.log(`Attempting to fetch from n8n webhook: ${WEBHOOK_URL}`);
             
-            response = await axios.post(WEBHOOK_URL, {}, {
+            response = await axios.get(WEBHOOK_URL, {
                 headers: {
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'User-Agent': 'Webhook-Dashboard/1.0'
                 },
-                validateStatus: () => true, // Don't throw on any status
-                timeout: 10000 // 10 second timeout
+                validateStatus: () => true,
+                timeout: 10000
             });
 
             console.log(`n8n webhook response status: ${response.status}`);
 
-            // If POST fails, try GET
+            // If GET fails, try POST as fallback
             if (response.status >= 400) {
-                console.log('POST failed, trying GET...');
-                response = await axios.get(WEBHOOK_URL, {
+                console.log('GET failed, trying POST...');
+                response = await axios.post(WEBHOOK_URL, {}, {
                     headers: {
+                        'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'User-Agent': 'Webhook-Dashboard/1.0'
                     },
                     validateStatus: () => true,
                     timeout: 10000
                 });
-                console.log(`GET response status: ${response.status}`);
+                console.log(`POST response status: ${response.status}`);
             }
 
             if (response.status === 404) {
@@ -369,7 +368,7 @@ app.get('/api/price-change-logs', (req, res) => {
 // Chat endpoint - proxy to n8n chat webhook
 app.post('/api/chat', async (req, res) => {
     try {
-        const CHAT_WEBHOOK_URL = 'https://jackwilde.app.n8n.cloud/webhook/294320af-2b6f-4723-8949-aa8764c8ee04';
+        const CHAT_WEBHOOK_URL = 'https://automation.wildeautomations.com/webhook/979668a1-0ef1-4727-8e78-3390d81fb5ef/chat';
         const { message } = req.body;
 
         if (!message) {
@@ -447,7 +446,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint - serve dashboard
 app.get('/', (req, res) => {
-    res.sendFile(join(__dirname, 'webhook-dashboard.html'));
+    res.sendFile('/Users/jack/webhook-dashboard.html');
 });
 
 // Start server
