@@ -368,7 +368,7 @@ app.get('/api/price-change-logs', (req, res) => {
 // Chat endpoint - proxy to n8n chat webhook
 app.post('/api/chat', async (req, res) => {
     try {
-        const CHAT_WEBHOOK_URL = 'https://automation.wildeautomations.com/webhook-test/022578ee-9396-441a-8d1e-67bb4473d9de';
+        const CHAT_WEBHOOK_URL = 'https://automation.wildeautomations.com/webhook/022578ee-9396-441a-8d1e-67bb4473d9de';
         const { message } = req.body;
 
         if (!message) {
